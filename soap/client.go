@@ -49,6 +49,7 @@ type Client struct {
 	UserAgent              string               // User-Agent header will be added to each request
 	Namespace              string               // SOAP Namespace
 	URNamespace            string               // Uniform Resource Namespace
+	URN1amespace           string               // Uniform Resource Namespace
 	ThisNamespace          string               // SOAP This-Namespace (tns)
 	ExcludeActionNamespace bool                 // Include Namespace to SOAP Action header
 	Envelope               string               // Optional SOAP Envelope
@@ -101,6 +102,7 @@ func doRoundTrip(c *Client, setHeaders func(*http.Request), in, out Message) err
 	req := &Envelope{
 		EnvelopeAttr: c.Envelope,
 		URNAttr:      c.URNamespace,
+		URN1Attr:     c.URN1amespace,
 		NSAttr:       c.Namespace,
 		TNSAttr:      c.ThisNamespace,
 		XSIAttr:      XSINamespace,
@@ -246,6 +248,7 @@ type Envelope struct {
 	NSAttr       string   `xml:"xmlns:ns,attr"`
 	TNSAttr      string   `xml:"xmlns:tns,attr,omitempty"`
 	URNAttr      string   `xml:"xmlns:urn,attr,omitempty"`
+	URN1Attr     string   `xml:"xmlns:urn1,attr,omitempty"`
 	XSIAttr      string   `xml:"xmlns:xsi,attr,omitempty"`
 	Header       Message  `xml:"SOAP-ENV:Header"`
 	Body         Message  `xml:"SOAP-ENV:Body"`
