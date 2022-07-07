@@ -10,6 +10,8 @@ import (
 	"io/ioutil"
 	"net/http"
 	"reflect"
+	"strings"
+	"unicode/utf8"
 
 	"golang.org/x/net/html/charset"
 )
@@ -128,6 +130,7 @@ func doRoundTrip(c *Client, setHeaders func(*http.Request), in, out Message) err
 	if cli == nil {
 		cli = http.DefaultClient
 	}
+	//fmt.Println(&b)
 	r, err := http.NewRequest("POST", c.URL, &b)
 	if err != nil {
 		return err
@@ -159,15 +162,42 @@ func doRoundTrip(c *Client, setHeaders func(*http.Request), in, out Message) err
 			Msg:        string(body),
 		}
 	}
+	// if resp.StatusCode == http.StatusOK {
+	// 	bodyBytes, err := io.ReadAll(resp.Body)
+	// 	if err != nil {
+	// 		fmt.Println(err)
+	// 	}
+	// 	bodyString := string(bodyBytes)
+	// 	fmt.Println(bodyString)
+	// }
 
 	marshalStructure := struct {
 		XMLName xml.Name `xml:"Envelope"`
 		Body    Message
 	}{Body: out}
 
-	decoder := xml.NewDecoder(resp.Body)
+	bodyBytes, err := io.ReadAll(resp.Body)
+	if err != nil {
+		fmt.Println(err)
+	}
+
+	decoder := xml.NewDecoder(strings.NewReader(string(c.RemoveNonUTF8Bytes(bodyBytes))))
 	decoder.CharsetReader = charset.NewReaderLabel
 	return decoder.Decode(&marshalStructure)
+}
+
+// from: https://stackoverflow.com/questions/40096958/golang-xml-ending-parsing-with-invalid-utf-8-error
+var removeNonUTF = func(r rune) rune {
+	if r == utf8.RuneError {
+		return -1
+	}
+	return r
+}
+
+// RemoveNonUTF8Bytes removes bytes that isn't UTF-8 encoded
+// from: https://stackoverflow.com/questions/40096958/golang-xml-ending-parsing-with-invalid-utf-8-error
+func (c *Client) RemoveNonUTF8Bytes(data []byte) []byte {
+	return bytes.Map(removeNonUTF, data)
 }
 
 // RoundTrip implements the RoundTripper interface.
